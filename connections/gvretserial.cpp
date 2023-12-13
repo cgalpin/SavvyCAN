@@ -76,7 +76,7 @@ void GVRetSerial::sendToSerial(const QByteArray &bytes)
         byt = (unsigned char)byt;
         buildDebug = buildDebug % QString::number(byt, 16) % " ";
     }
-    //sendDebug(buildDebug); // TODO remove
+    sendDebug(buildDebug);
 
     if (serial) serial->write(bytes);
     if (tcpClient) tcpClient->write(bytes);
@@ -144,7 +144,6 @@ void GVRetSerial::piSetBusSettings(int pBusIdx, CANBus bus)
         if (bus.isCanFDSupported()) {
             can0FdEnabled = bus.isCanFD();
             can0DataRate = bus.getDataRate();
-            //can0DataRate |= 0x80000000; // TODO
         } else {
             can0FdEnabled = false;
             can0DataRate = 2000000;
@@ -623,7 +622,7 @@ void GVRetSerial::readSerialData()
     if (tcpClient) data = tcpClient->readAll();
     if (udpClient) data = udpClient->readAll();
 
-    //TODO sendDebug("Got data from serial. Len = " % QString::number(data.length()));
+    sendDebug("Got data from serial. Len = " % QString::number(data.length()));
     for (int i = 0; i < data.length(); i++)
     {
         c = data.at(i);
@@ -685,7 +684,7 @@ void GVRetSerial::procRXChar(unsigned char c)
             break;
         case 9:
             validationCounter = 10;
-            //qDebug() << "Got validated"; // TODO remove
+            qDebug() << "Got validated";
             rx_state = IDLE;
             break;
         case 12:
@@ -703,7 +702,7 @@ void GVRetSerial::procRXChar(unsigned char c)
             rx_step = 0;
             break;
         case 21: //we set canbus FD specs we don't accept replies.
-            qDebug() << "Got FD params reply!!"; // TODO
+            qDebug() << "Got FD params reply!!";
             rx_state = IDLE;
             break;
         case 22:

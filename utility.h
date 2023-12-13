@@ -187,6 +187,7 @@ public:
             return (unsigned long long)(timestamp);
             break;
         case TS_SECONDS:
+        default:
             return (double)timestamp / 1000000.0;
             break;
         }
