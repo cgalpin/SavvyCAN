@@ -340,6 +340,7 @@ void LAWICELSerial::deviceConnected()
     stats.numHardwareBuses = mNumBuses;
     mBusData[0].mConfigured = true;
     mBusData[0].mBus.setActive(true);
+    mBusData[0].mBus.setCanFDSupported(true);
     //mBusData[0].mBus.setSpeed();
     emit status(stats);
 }

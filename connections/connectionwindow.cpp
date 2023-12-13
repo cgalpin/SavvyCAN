@@ -75,6 +75,11 @@ ConnectionWindow::ConnectionWindow(QWidget *parent) :
     //ui->cbBusSpeed->addItem("233333");
     //ui->cbBusSpeed->addItem("400000");
 
+    ui->cbDataRate->addItem("1000000");
+    ui->cbDataRate->addItem("2000000");
+    ui->cbDataRate->addItem("4000000");
+    ui->cbDataRate->addItem("5000000");
+
     rxBroadcastGVRET = new QUdpSocket(this);
     //Need to make sure it tries to share the address in case there are
     //multiple instances of SavvyCAN running.
@@ -366,15 +371,17 @@ void ConnectionWindow::saveBusSettings()
 
         if (!conn_p->getBusSettings(offset, bus))
         {
-            qDebug() << "Could not retrieve bus settings!";
+            qDebug() << "Could not retrieve bus settings! selIdx=" << selIdx << " offset=" << offset;
             return;
         }
 
         bus.setSpeed(ui->cbBusSpeed->currentText().toInt());
         bus.setActive(ui->ckEnable->isChecked());
         bus.setListenOnly(ui->ckListenOnly->isChecked());
-        bus.setCanFD(ui->canFDEnable->isChecked());
-        bus.setDataRate(ui->cbDataRate->currentText().toInt());
+        if (bus.isCanFDSupported()) {
+            bus.setCanFD(ui->canFDEnable->isChecked());
+            bus.setDataRate(ui->cbDataRate->currentText().toInt());
+        }
         conn_p->setBusSettings(offset, bus);
     }
 }
@@ -401,7 +408,7 @@ void ConnectionWindow::populateBusDetails(int offset)
 
         if (!conn_p->getBusSettings(offset, bus))
         {
-            qDebug() << "Could not retrieve bus settings!";
+            qDebug() << "Could not retrieve bus settings! selIdx=" << selIdx << " offset=" << offset;
             return;
         }
 
@@ -409,7 +416,8 @@ void ConnectionWindow::populateBusDetails(int offset)
         //ui->lblBusNum->setText(QString::number(busBase + offset));
         ui->ckListenOnly->setChecked(bus.isListenOnly());
         ui->ckEnable->setChecked(bus.isActive());
-        if (conn_p->getType() == CANCon::type::SERIALBUS || conn_p->getType() == CANCon::type::LAWICEL)
+        if (conn_p->getType() == CANCon::type::SERIALBUS || conn_p->getType() == CANCon::type::LAWICEL 
+            || (conn_p->getType() == CANCon::type::GVRET_SERIAL && bus.isCanFDSupported()))
         {
             ui->canFDEnable->setVisible(true);
             ui->canFDEnable_label->setVisible(true);

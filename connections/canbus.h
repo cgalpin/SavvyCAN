@@ -16,6 +16,7 @@ public:
     bool listenOnly;
     bool singleWire;
     bool active; //is this bus turned on?
+    bool canFDSupported;
     bool canFD;
     int dataRate;
 
@@ -23,6 +24,7 @@ public:
     void setListenOnly(bool); //bool for whether to only listen
     void setSingleWire(bool); //bool for whether to use single wire mode
     void setActive(bool); //whether this bus should be enabled or not.
+    void setCanFDSupported(bool); // whether CANFD is supported or not.
     void setCanFD(bool); // enable or disable CANFD support
     int getSpeed();
     int getDataRate();
@@ -30,6 +32,7 @@ public:
     bool isListenOnly();
     bool isSingleWire();
     bool isActive();
+    bool isCanFDSupported();
     bool isCanFD();
 };
 

@@ -107,6 +107,8 @@ protected:
     int32_t timeBasis;
     uint64_t lastSystemTimeBasis;
     uint64_t timeAtGVRETSync;
+    bool can0FdSupported, can1FdSupported, can0FdEnabled, can1FdEnabled;
+    int can0DataRate, can1DataRate;
 };
 
 #endif // GVRETSERIAL_H
