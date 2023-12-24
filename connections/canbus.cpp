@@ -115,8 +115,8 @@ QDataStream & operator>>(QDataStream & pStream, CANBus& pCanBus)
     pStream >> pCanBus.listenOnly;
     pStream >> pCanBus.singleWire;
     pStream >> pCanBus.active;
-    pStream << pCanBus.canFDSupported;
-    pStream << pCanBus.canFD;
-    pStream << pCanBus.dataRate;
+    pStream >> pCanBus.canFDSupported;
+    pStream >> pCanBus.canFD;
+    pStream >> pCanBus.dataRate;
     return pStream;
 }
