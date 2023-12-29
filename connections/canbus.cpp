@@ -59,7 +59,7 @@ void CANBus::setCanFDSupported(bool mode){
 }
 
 void CANBus::setCanFD(bool mode){
-    //qDebug() << "CANBUS setCanFD = " << mode;
+    qDebug() << "CANBUS setCanFD = " << mode;
     canFD = mode;
 }
 

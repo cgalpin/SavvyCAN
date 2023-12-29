@@ -122,6 +122,15 @@ void GVRetSerial::piSetBusSettings(int pBusIdx, CANBus bus)
     /* copy bus config */
     setBusConfig(pBusIdx, bus);
 
+    // TODO: the other bus settings are not here!!!
+    // probably should initialize to zero
+    can0Baud = 0;
+    can1Baud = 0;
+    can0FdEnabled = false;
+    can1FdEnabled = false;
+    can0DataRate = 0;
+    can1DataRate = 0;
+
     qDebug() << "About to update bus " << pBusIdx << " on GVRET";
     if (pBusIdx == 0)
     {
@@ -142,13 +151,14 @@ void GVRetSerial::piSetBusSettings(int pBusIdx, CANBus bus)
         else can0ListenOnly = false;
 
         if (bus.isCanFDSupported()) {
-            can0FdEnabled = bus.isCanFD();
             can0DataRate = bus.getDataRate();
-        } else {
-            can0FdEnabled = false;
-            can0DataRate = 2000000;
+            can0DataRate |= 0x80000000; // signal we are sending FD enabled status as well
+
+            can0FdEnabled = bus.isCanFD();
+            if ( can0FdEnabled ) {
+                can0DataRate |= 0x40000000;
+            }
         }
-        
     }
     else if (pBusIdx == 1)
     {
@@ -176,11 +186,13 @@ void GVRetSerial::piSetBusSettings(int pBusIdx, CANBus bus)
         else deviceSingleWireMode = 0;
 
         if (bus.isCanFDSupported()) {
-            can1FdEnabled = bus.isCanFD();
             can1DataRate = bus.getDataRate();
-        } else {
-            can1FdEnabled = false;
-            can1DataRate = 2000000;
+            can1DataRate |= 0x80000000; // signal we are sending FD enabled status as well
+
+            can1FdEnabled = bus.isCanFD();
+            if ( can1FdEnabled ) {
+                can1DataRate |= 0x40000000;
+            }
         }
     }
     else if (pBusIdx == 2)
@@ -207,13 +219,30 @@ void GVRetSerial::piSetBusSettings(int pBusIdx, CANBus bus)
         /* update baud rates */
         QByteArray buffer;
         sendDebug("Got signal to update bauds. 1: " + QString::number((can0Baud & 0xFFFFFFF)) + " 2: " + QString::number((can1Baud & 0xFFFFFFF)));
+        
+        // TODO: test logging
+        if (can1Baud & 0x80000000ul) {
+            sendDebug("signalling CAN enabled status");
+            if (can1Baud & 0x40000000ul) {
+                sendDebug("CAN enabled!");
+            } else {
+                sendDebug("CAN NOT enabled!");
+            }
+            if (can1Baud & 0x20000000ul) {
+                sendDebug("Listen only enabled!");
+            } else {
+                sendDebug("Listen only NOT enabled!");
+            }
+            sendDebug("can1Baud: " + QString::number(can1Baud & 0xFFFFF));
+        }
+        
         buffer[0] = (char)0xF1; //start of a command over serial
         buffer[1] = 5; //setup canbus
-        buffer[2] = (char)(can0Baud & 0xFF); //four bytes of ID LSB first
+        buffer[2] = (char)(can0Baud & 0xFF); //four bytes of baud LSB first
         buffer[3] = (char)(can0Baud >> 8);
         buffer[4] = (char)(can0Baud >> 16);
         buffer[5] = (char)(can0Baud >> 24);
-        buffer[6] = (char)(can1Baud & 0xFF); //four bytes of ID LSB first
+        buffer[6] = (char)(can1Baud & 0xFF); //four bytes of baud LSB first
         buffer[7] = (char)(can1Baud >> 8);
         buffer[8] = (char)(can1Baud >> 16);
         buffer[9] = (char)(can1Baud >> 24);
@@ -223,21 +252,33 @@ void GVRetSerial::piSetBusSettings(int pBusIdx, CANBus bus)
         // update FD
         if (deviceBuildNum > 618) { // try preserve backward compatibility
             // TODO: might be able to keep adding to buffer and then only sendToSerial once
-            sendDebug("Got signal to update FD. can0 FD enabled: " + QString::number(can0FdEnabled) + " dataRate: " + QString::number((can0DataRate & 0xFFFFFFF)));
-            sendDebug("Got signal to update FD. can1 FD enabled: " + QString::number(can1FdEnabled) + " dataRate: " + QString::number((can1DataRate & 0xFFFFFFF)));
+            sendDebug("Got signal to update FD. can0 FD enabled: " + QString::number(can0FdEnabled) + " dataRate: " + QString::number((can0DataRate & 0xFFFFFF)));
+            sendDebug("Got signal to update FD. can1 FD enabled: " + QString::number(can1FdEnabled) + " dataRate: " + QString::number((can1DataRate & 0xFFFFFF)));
             buffer[0] = (char)0xF1; //start of a command over serial
-            buffer[1] = 21; //setup FD
-            buffer[2] = can0FdEnabled ? 1 : 0;
-            buffer[3] = (char)(can0DataRate & 0xFF); //four bytes of data rate LSB first
-            buffer[4] = (char)(can0DataRate >> 8);
-            buffer[5] = (char)(can0DataRate >> 16);
-            buffer[6] = (char)(can0DataRate >> 24);
-            buffer[7] = can1FdEnabled ? 1 : 0;
-            buffer[8] = (char)(can1DataRate & 0xFF); //four bytes of data rate LSB first
-            buffer[9] = (char)(can1DataRate >> 8);
-            buffer[10] = (char)(can1DataRate >> 16);
-            buffer[11] = (char)(can1DataRate >> 24);
-            buffer[12] = 0;
+            buffer[1] = 21; //setup FD 0x15
+            buffer[2] = (char)(can0DataRate & 0xFF); //four bytes of data rate LSB first
+            buffer[3] = (char)(can0DataRate >> 8);
+            buffer[4] = (char)(can0DataRate >> 16);
+            buffer[5] = (char)(can0DataRate >> 24);
+
+            // TODO: test logging
+            sendDebug("CAN1DR " + QString::number((char)(can1DataRate & 0xFF)) + " " + QString::number((char)(can1DataRate >> 8)) + " " + QString::number((char)(can1DataRate >> 16)) + " " + QString::number((char)(can1DataRate >> 24)));
+            
+            if (can1DataRate & 0x80000000ul) {
+                sendDebug("signalling FD enabled status");
+                if (can1DataRate & 0x40000000ul) {
+                    sendDebug("FD enabled!");
+                } else {
+                    sendDebug("FD NOT enabled!");
+                }
+                sendDebug("can1DataRate: " + QString::number(can1DataRate & 0xFFFFFF)); // 
+            }
+
+            buffer[6] = (char)(can1DataRate & 0xFF); //four bytes of data rate LSB first
+            buffer[7] = (char)(can1DataRate >> 8);
+            buffer[8] = (char)(can1DataRate >> 16);
+            buffer[9] = (char)(can1DataRate >> 24);
+            buffer[10] = 0;
             sendToSerial(buffer);
         }
     }
@@ -701,14 +742,13 @@ void GVRetSerial::procRXChar(unsigned char c)
             rx_state = BUILD_FD_FRAME;
             rx_step = 0;
             break;
-        case 21: //we set canbus FD specs we don't accept replies.
-            qDebug() << "Got FD params reply!!";
-            rx_state = IDLE;
-            break;
+        // case 21: //we set canbus FD specs we don't accept replies.
+        //     rx_state = IDLE;
+        //     break;
         case 22:
             rx_state = GET_FD_SETTINGS;
             rx_step = 0;
-            qDebug() << "Got FD params reply";
+            qDebug() << "Got FD settings reply";
             break;
         }
         break;
@@ -1060,7 +1100,7 @@ void GVRetSerial::procRXChar(unsigned char c)
         switch (rx_step)
         {
         case 0:
-            can0FdSupported = (c & 0xF);
+            can0FdSupported = (c & 0xF); // TODO try (c > 0)
             can0FdEnabled = (c >> 4);
             break;
         case 1:
@@ -1076,7 +1116,7 @@ void GVRetSerial::procRXChar(unsigned char c)
             can0DataRate |= c << 24;
             break;
         case 5:
-            can1FdSupported = (c & 0xF);
+            can1FdSupported = (c > 0); //(c & 0xF);  // TODO try (c > 0)
             can1FdEnabled = (c >> 4);
             break;
         case 6:

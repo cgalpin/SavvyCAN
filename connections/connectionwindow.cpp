@@ -371,7 +371,7 @@ void ConnectionWindow::saveBusSettings()
 
         if (!conn_p->getBusSettings(offset, bus))
         {
-            qDebug() << "Could not retrieve bus settings! selIdx=" << selIdx << " offset=" << offset;
+            qDebug() << "saveBusSettings: Could not retrieve bus settings! selIdx=" << selIdx << " offset=" << offset;
             return;
         }
 
@@ -379,6 +379,7 @@ void ConnectionWindow::saveBusSettings()
         bus.setActive(ui->ckEnable->isChecked());
         bus.setListenOnly(ui->ckListenOnly->isChecked());
         if (bus.isCanFDSupported()) {
+            qDebug() << "FD supported so setting canFD: " << ui->canFDEnable->isChecked() << " and data rate: " << ui->cbDataRate->currentText().toInt();
             bus.setCanFD(ui->canFDEnable->isChecked());
             bus.setDataRate(ui->cbDataRate->currentText().toInt());
         }
@@ -408,7 +409,7 @@ void ConnectionWindow::populateBusDetails(int offset)
 
         if (!conn_p->getBusSettings(offset, bus))
         {
-            qDebug() << "Could not retrieve bus settings! selIdx=" << selIdx << " offset=" << offset;
+            qDebug() << "populateBusDetails: Could not retrieve bus settings! selIdx=" << selIdx << " offset=" << offset;
             return;
         }
 
@@ -436,8 +437,11 @@ void ConnectionWindow::populateBusDetails(int offset)
                 break;
             }
         }
+        if (!found) {
+            ui->cbBusSpeed->addItem(QString::number(bus.getSpeed()));
+            ui->cbBusSpeed->setCurrentIndex(ui->cbBusSpeed->count()-1);
+        }
 
-        if (!found) ui->cbBusSpeed->addItem(QString::number(bus.getSpeed()));
         found = false;
         for (int i = 0; i < ui->cbDataRate->count(); i++)
         {
@@ -448,7 +452,10 @@ void ConnectionWindow::populateBusDetails(int offset)
                 break;
             }
         }
-        if (!found) ui->cbDataRate->addItem(QString::number(bus.getDataRate()));
+        if (!found) {
+            ui->cbDataRate->addItem(QString::number(bus.getDataRate()));
+            ui->cbDataRate->setCurrentIndex(ui->cbDataRate->count()-1);
+        }
     }
 }
 
