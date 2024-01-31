@@ -552,6 +552,7 @@ void LAWICELSerial::readSerialData()
                 break;
             case 'b':
                 buildFrame.setBitrateSwitch(true); //BRS enabled
+                [[fallthrough]];
             case 'd': //standard fd frame, BRS disabled
                 //tIIILDD
                 buildFrame.setFlexibleDataRateFormat(true);
@@ -582,6 +583,7 @@ void LAWICELSerial::readSerialData()
                 break;
             case 'B':
                 buildFrame.setBitrateSwitch(true); //BRS enabled
+                [[fallthrough]];
             case 'D': //extended fd frame
                 //TIIIIIIIILDD.
                 buildFrame.setFlexibleDataRateFormat(true);
