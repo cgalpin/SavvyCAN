@@ -79,7 +79,7 @@ bool CANBus::isActive() const {
     return active;
 }
 
-bool CANBus::isCanFDSupported(){
+bool CANBus::isCanFDSupported() const {
     return canFDSupported;
 }
 
